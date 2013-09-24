@@ -14,6 +14,9 @@ namespace ANPR
 {
     public partial class Frame : Form
     {
+        private Thread thread;
+        private bool capturing = true;
+
         public Frame()
         {
             InitializeComponent();
@@ -22,7 +25,8 @@ namespace ANPR
 
         private void ConfigureEnvironment()
         {
-            new Thread(ProcessSnapshot).Start();
+            thread = new Thread(ProcessSnapshot);
+            thread.Start();
         }
 
         private void ProcessSnapshot()
@@ -30,7 +34,7 @@ namespace ANPR
             try
             {
                 CvCapture capture = Cv.CreateCameraCapture(CaptureDevice.Any);
-                while (true)
+                while (capturing)
                 {
                     IplImage snapshot = capture.QueryFrame();
                     snapshotBox.Image = snapshot.ToBitmap();
@@ -41,6 +45,11 @@ namespace ANPR
             {
                 MessageBox.Show(ex.Message);
             }
+        }
+
+        private void Frame_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            capturing = false;
         }
     }
 }
