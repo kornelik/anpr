@@ -13,15 +13,15 @@
 #include "opencv2/highgui/highgui_c.h"
 #include "opencv2/imgproc/imgproc_c.h"
 
-using namespace std;
-using namespace cv; 
+using namespace cv;
 
 int main()
 {
 	CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
 	IplImage* frame = 0;
-	
-	cvNamedWindow("Camera", CV_WINDOW_AUTOSIZE);
+
+	cvNamedWindow("Camera", 0);
+    cvResizeWindow("Camera", 640, 350);
 	while (true)
 	{
 		frame = cvQueryFrame(capture);
@@ -33,3 +33,4 @@ int main()
 	}
 	return 0;
 }
+
