@@ -101,7 +101,7 @@ namespace anpr {
             findLicensePlate(contours, hierarchy, 0, plates);
         if (plates.size() == 0) return false;
 
-        cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
+//        cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
 
         value = "";
         for (size_t i = 0; i < plates.size(); ++i) {
