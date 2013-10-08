@@ -1,5 +1,5 @@
-LIBS=$(shell pkg-config --libs opencv) 
-CFLAGS=-Wall -ltesseract -O2
+LIBS=$(shell pkg-config --libs opencv) -ltesseract
+CFLAGS=-Wall -Werror -O2
 LDFLAGS=
 
 SOURCES=main.cpp recognizer.cpp
