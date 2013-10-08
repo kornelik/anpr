@@ -1,5 +1,6 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <iomanip>
 #include "recognizer.h"
 
 const char * test_images[] = {
@@ -20,23 +21,78 @@ const char * test_images[] = {
     "IMAG0613.jpg"
 };
 
+const char * test_result[] = {
+    "8700EP7",
+    "6827IA5",
+    "6969MX7",
+    "1501BT7",
+    "1188MH7",
+    "7778MB7",
+    "7187KX7",
+    "0689MK7",
+    "5617IP7",
+    "8894OT7",
+    "7021OH7",
+    "3841MA7",
+    "2326IX7",
+    "0057IM7",
+    "7977OA7"
+};
+
+template <typename T>
+typename T::size_type levenshtein_distance(const T & src, const T & dst) {
+    const typename T::size_type m = src.size();
+    const typename T::size_type n = dst.size();
+    if (m == 0) return n;
+    if (n == 0) return m;
+    std::vector< std::vector<typename T::size_type> > matrix(m + 1);
+    for (typename T::size_type i = 0; i <= m; ++i) {
+        matrix[i].resize(n + 1);
+        matrix[i][0] = i;
+    }
+    for (typename T::size_type i = 0; i <= n; ++i) {
+        matrix[0][i] = i;
+    }
+    typename T::size_type above_cell, left_cell, diagonal_cell, cost;
+    for (typename T::size_type i = 1; i <= m; ++i) {
+        for(typename T::size_type j = 1; j <= n; ++j) {
+            cost = src[i - 1] == dst[j - 1] ? 0 : 1;
+            above_cell = matrix[i - 1][j];
+            left_cell = matrix[i][j - 1];
+            diagonal_cell = matrix[i - 1][j - 1];
+            matrix[i][j] = std::min(std::min(above_cell + 1, left_cell + 1), diagonal_cell + cost);
+        }
+    }
+    return matrix[m][n];
+}
+
 int main()
 {
     std::string v;
     anpr::Recognizer r;
 
+//    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
+
+    size_t error = 0;
     int test_images_count = sizeof(test_images) / sizeof(test_images[0]);
     for (int testi = 0; testi < test_images_count; ++testi) {
         cv::Mat img = cv::imread(std::string("tests/") + test_images[testi]);
+
+        std::cout << "Answer: " << std::setw(10) << test_result[testi] << ", Got: ";
+        v = "";
         if (r.RecognizePlateNumber(img, v)) {
-            std::cout << "OK: " << v << std::endl;
+            std::cout << std::setw(10) << v;
         } else {
-            std::cout << "NO" << std::endl;
+            std::cout << std::setw(10) << "Not found";
         }
-        cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
-        cv::imshow("Test", img);
-        cv::waitKey(0);
+        size_t curError = levenshtein_distance(v, std::string(test_result[testi]));
+        std::cout << ", Error: " << curError << std::endl;
+
+        error += curError;
+//        cv::imshow("Test", img);
+//        cv::waitKey(0);
     }
+    std::cout << "Error score: " << error << std::endl;
     return 0;
 }
 
