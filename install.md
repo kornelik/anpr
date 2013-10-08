@@ -16,10 +16,6 @@ Build Instructions (Linux)
 
 	`git clone https://github.com/kornelik/anpr`
 
-4. Checkout c++ branch
-
-	`git checkout c++`
-
 4. Build the code with...
 
 	`cd anpr/src`
