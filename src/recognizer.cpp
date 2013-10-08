@@ -81,7 +81,8 @@ namespace anpr {
 
         cv::Mat gray0 = preprocessImage(image);
         cv::findContours(gray0, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
-        findLicensePlate(contours, hierarchy, 0, plates);
+        if (contours.size() > 0)
+            findLicensePlate(contours, hierarchy, 0, plates);
         if (plates.size() == 0) return false;
 
         //cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
