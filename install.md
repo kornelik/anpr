@@ -10,7 +10,7 @@ Build Instructions (Linux)
 
 2. Install Tesseract library: https://code.google.com/p/tesseract-ocr/
 
-   	`sudo apt-get install tesseract-ocr tesseract-orc-eng libtesseract-dev`
+   	`sudo apt-get install tesseract-ocr tesseract-ocr-eng libtesseract-dev`
 
 3. Get the source code from this repo
 
