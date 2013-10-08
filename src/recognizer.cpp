@@ -65,14 +65,24 @@ namespace {
 //        cv::dilate(gray, gray, cv::Mat(), cv::Point(-1,-1));
         return std::make_pair(gray, gray0);
     }
-}
 
-namespace anpr {
     static const char* goodLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
     bool notGoodLetter(char ch) {
         return strchr(goodLetters, ch) == 0;
     }
+
+    void fixValue(std::string& value) {
+        value.erase(std::remove_if(value.begin(), value.end(), notGoodLetter), value.end());
+        while (value.length() > 0 && !isdigit(value[0])) value.erase(value.begin());
+        while (value.length() > 0 && !isdigit(value[value.length() - 1])) value.erase(value.end() - 1);
+        if (value.length() < 5) value = "";
+    }
+
+}
+
+namespace anpr {
+
 
     Recognizer::Recognizer() {
         tessApi.Init(NULL, "eng");
@@ -91,19 +101,38 @@ namespace anpr {
             findLicensePlate(contours, hierarchy, 0, plates);
         if (plates.size() == 0) return false;
 
-        //cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
+        cv::namedWindow("gray", CV_WINDOW_AUTOSIZE);
 
         value = "";
         for (size_t i = 0; i < plates.size(); ++i) {
             cv::drawContours(image, contours, plates[i], cv::Scalar(0, 0, 255), 2, 8, hierarchy, 0, cv::Point());
             cv::Rect plateRect = cv::boundingRect(contours[plates[i]]);
-            cv::Mat letter1 = cv::Mat(mats.second, plateRect), letter2;
+            cv::Mat letter2 = cv::Mat(mats.second, plateRect), rotated, letter1;
+            cv::RotatedRect box = cv::minAreaRect(contours[plates[i]]);
+            if (box.angle < -45.0)
+            {
+                float tmp = box.size.width;
+                box.size.width = box.size.height;
+                box.size.height = tmp;
+                box.angle += 90.0f;
+            }
+            else if (box.angle > 45.0)
+            {
+                float tmp = box.size.width;
+                box.size.width = box.size.height;
+                box.size.height = tmp;
+                box.angle -= 90.0f;
+            }
+            cv::Mat rot_mat = cv::getRotationMatrix2D(cv::Point(box.center.x - plateRect.x, box.center.y - plateRect.y), box.angle, 1);
+            cv::warpAffine(letter2, rotated, rot_mat, letter2.size(), cv::INTER_CUBIC);
+            cv::getRectSubPix(rotated, box.size, cv::Point(box.center.x - plateRect.x, box.center.y - plateRect.y), letter1);
             tessApi.SetImage((uchar*)letter1.data, letter1.cols, letter1.rows, letter1.channels(), letter1.step1());
             tessApi.SetRectangle(0, 0, letter1.cols, letter1.rows);
             value += tessApi.GetUTF8Text();
         }
-        value.erase(std::remove_if(value.begin(), value.end(), notGoodLetter), value.end());
-        return true;
+
+        fixValue(value);
+        return value.length() > 0;
     }
 
 }

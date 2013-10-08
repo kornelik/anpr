@@ -73,7 +73,9 @@ int main()
 
 //    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
 
-    size_t error = 0;
+    size_t errorPrecision = 0;
+    size_t errorRecall = 0;
+
     int test_images_count = sizeof(test_images) / sizeof(test_images[0]);
     for (int testi = 0; testi < test_images_count; ++testi) {
         cv::Mat img = cv::imread(std::string("tests/") + test_images[testi]);
@@ -82,17 +84,20 @@ int main()
         v = "";
         if (r.RecognizePlateNumber(img, v)) {
             std::cout << std::setw(10) << v;
-        } else {
-            std::cout << std::setw(10) << "Not found";
-        }
-        size_t curError = levenshtein_distance(v, std::string(test_result[testi]));
-        std::cout << ", Error: " << curError << std::endl;
 
-        error += curError;
+            size_t curError = levenshtein_distance(v, std::string(test_result[testi]));
+            std::cout << ", Error: " << curError << std::endl;
+            errorPrecision += curError;
+        } else {
+            std::cout << std::setw(10) << "" << ", Not found" << std::endl;
+            ++errorRecall;
+        }
 //        cv::imshow("Test", img);
 //        cv::waitKey(0);
     }
-    std::cout << "Error score: " << error << std::endl;
+
+    std::cout << "Precision error: " << errorPrecision << std::endl;
+    std::cout << "Recall error: " << double(errorRecall * 100) / test_images_count << "%" << std::endl;
     return 0;
 }
 
