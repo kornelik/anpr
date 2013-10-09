@@ -2,17 +2,97 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <opencv2/ml/ml.hpp>
 
 #include <tesseract/baseapi.h>
 
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
 namespace anpr {
 
+    void debug(const cv::Mat& image) {
+        cv::namedWindow("Debug", 0);
+        cv::imshow("Debug", image);
+        cv::waitKey(0);
+    }
+    void debug(const cv::Mat& i1, const cv::Mat& i2,const cv::Mat& i3) {
+        cv::namedWindow("Debug", 0);
+
+        cv::Mat image(cv::Size(i1.size().width + i2.size().width + i3.size().width, std::max(std::max(i1.size().height, i2.size().height), i3.size().height)), i1.type());
+        i1.copyTo( image(cv::Rect(cv::Point(0, 0), i1.size())) );
+        i2.copyTo( image(cv::Rect(cv::Point(i1.size().width, 0), i2.size())) );
+        i3.copyTo( image(cv::Rect(cv::Point(i1.size().width + i2.size().width, 0), i2.size())) );
+
+        cv::imshow("Debug", image);
+        cv::waitKey(0);
+    }
+
+    class OCRChar {
+    private:
+        cv::KNearest oracle;
+
+    public:
+        static void safeBinaryResize(const cv::Mat& from, cv::Mat& out, cv::Size size) {
+            float factor = std::min((float)size.width / from.size().width, (float)size.height / from.size().height);
+            cv::Mat sized;
+            cv::resize(from, sized, cv::Size(from.size().width * factor, from.size().height * factor), 0, 0, cv::INTER_CUBIC);
+            cv::Mat dst(size, CV_8U);
+            dst.setTo(cv::Scalar(255, 255, 255));
+            sized.copyTo(dst(cv::Rect(cv::Point((size.width - sized.size().width) / 2, (size.height - sized.size().height) / 2), sized.size())));
+            cv::threshold(dst, out, 100, 255, cv::THRESH_BINARY);
+        }
+
+        OCRChar(const std::string& learnpath, const std::string& allchars)
+        {
+            cv::Mat trainData(allchars.length() * 4, 20 * 32, CV_32FC1);
+            cv::Mat trainClasses(allchars.length() * 4, 1, CV_32FC1);
+            size_t counter = 0;
+            for (size_t i = 0; i < allchars.size(); ++i) {
+                {
+                    std::string path = learnpath + allchars[i] + ".png";
+                    cv::Mat inp = cv::imread(path, 0), out;
+                    safeBinaryResize(inp, out, cv::Size(20, 32));
+                    for (size_t j = 0; j < 20 * 32; ++j) {
+                        ((float*)trainData.data)[counter++] = out.data[j];
+                    }
+                    for (size_t j = 0; j < 20 * 32; ++j) {
+                        ((float*)trainData.data)[counter++] = inp.data[j];
+                    }
+                }
+                {
+                    std::string path = learnpath + allchars[i] + "2.png";
+                    cv::Mat inp = cv::imread(path, 0), out;
+                    safeBinaryResize(inp, out, cv::Size(20, 32));
+                    for (size_t j = 0; j < 20 * 32; ++j) {
+                        ((float*)trainData.data)[counter++] = out.data[j];
+                    }
+                    for (size_t j = 0; j < 20 * 32; ++j) {
+                        ((float*)trainData.data)[counter++] = inp.data[j];
+                    }
+                }
+                ((float*)trainClasses.data)[i * 4] = allchars[i];
+                ((float*)trainClasses.data)[i * 4 + 1] = allchars[i];
+                ((float*)trainClasses.data)[i * 4 + 2] = allchars[i];
+                ((float*)trainClasses.data)[i * 4 + 3] = allchars[i];
+            }
+            oracle.train(trainData, trainClasses);
+        }
+
+        char Get(cv::Mat image) {
+            cv::Mat bin;
+            safeBinaryResize(image, bin, cv::Size(20, 32));
+            cv::Mat sample(1, 32 * 20, CV_32FC1);
+            for (size_t i = 0; i < 32 * 20; ++i) ((float*)sample.data)[i] = bin.data[i];
+            return (char)(oracle.find_nearest(sample, 1) + 1e-5);
+        }
+    };
+
     class Recognizer::Impl {
     private:
         tesseract::TessBaseAPI ocr_;
+        OCRChar ocrLetter_, ocrNumber_;
 
         static void fixBox(cv::RotatedRect& box) {
             if (box.angle < -45.0) {
@@ -76,6 +156,8 @@ namespace anpr {
         }
 
         #define SYMBOLS "ABCEHIKMOPTX0123456789"
+        #define SYMBOLS_NUMBERS "0123456789"
+        #define SYMBOLS_CHARS "ABCEHIKMOPTX"
 
         static bool isNotGoodLetter(char ch) {
             return strchr(SYMBOLS, ch) == NULL;
@@ -88,10 +170,72 @@ namespace anpr {
             if (value.length() < 5) value = "";
         }
 
-    public:
-        Impl() {
-            ocr_.Init(NULL, "eng");
+        static bool rectContain(cv::Rect r1, cv::Rect r2) {
+            return r1.x <= r2.x && r1.y <= r2.y && r1.x + r1.width >= r2.x + r2.width && r1.y + r1.height >= r2.y + r2.height;
+        }
+
+        static bool rectByX(const cv::Rect& r1, const cv::Rect& r2) {
+            return r1.x < r2.x;
+        }
+
+        std::string parsePlate(const cv::Mat& plate) {
+            cv::Mat psize, pcanny;
+
+            std::vector< std::vector<cv::Point> > contours;
+            cv::Mat paint(plate.size(), CV_8U);
+            cv::Canny(plate, pcanny, 100, 50, 3);
+            plate.copyTo(paint);
+            cv::findContours(pcanny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+            std::vector<cv::Rect> possible;
+            for (size_t i = 0; i < contours.size(); ++i) {
+                cv::Rect rect = cv::boundingRect(contours[i]);
+                if (rect.height < 0.6 * plate.size().height || rect.width <= 5)  continue;
+
+                bool add = true;
+                for (size_t j = 0; j < possible.size(); ++j) {
+                    if (rectContain(possible[j], rect)) {
+                        possible[j] = rect;
+                        add = false;
+                        break;
+                    }
+                    if (rectContain(rect, possible[j])) {
+                        add = false;
+                        break;
+                    }
+                }
+                if (add) {
+                    possible.push_back(rect);
+                }
+            }
+            if (possible.size() == 7) {
+                std::string result;
+                std::sort(possible.begin(), possible.end(), rectByX);
+
+                cv::Mat plate2;
+                cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 11, 0);
+
+                for (size_t i = 0; i < 4; ++i) result += ocrNumber_.Get(cv::Mat(plate2, possible[i]));
+                for (size_t i = 4; i < 6; ++i) result += ocrLetter_.Get(cv::Mat(plate2, possible[i]));
+                for (size_t i = 6; i < 7; ++i) result += ocrNumber_.Get(cv::Mat(plate2, possible[i]));
+
+                fixValue(result);
+                return result;
+            }
+
+            ocr_.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
             ocr_.SetVariable("tessedit_char_whitelist", SYMBOLS);
+            ocr_.SetImage((uchar*)plate.data, plate.cols, plate.rows, plate.channels(), plate.step1());
+            ocr_.SetRectangle(0, 0, plate.cols, plate.rows);
+
+            std::string result = ocr_.GetUTF8Text();
+            fixValue(result);
+            return result;
+        }
+
+    public:
+        Impl() : ocrLetter_("samples/", SYMBOLS_CHARS), ocrNumber_("samples/", SYMBOLS_NUMBERS) {
+            ocr_.Init(NULL, "eng");
         }
 
         bool RecognizePlateNumber(cv::Mat image, std::string& value) {
@@ -120,13 +264,11 @@ namespace anpr {
                 cv::warpAffine(plateImage, plateStraight, rotation, plateImage.size(), cv::INTER_CUBIC);
                 cv::getRectSubPix(plateStraight, box.size, cv::Point(box.center.x - plateRect.x, box.center.y - plateRect.y), plateFiltered);
 
-                ocr_.SetImage((uchar*)plateFiltered.data, plateFiltered.cols, plateFiltered.rows, plateFiltered.channels(), plateFiltered.step1());
-                ocr_.SetRectangle(0, 0, plateFiltered.cols, plateFiltered.rows);
-                value += ocr_.GetUTF8Text();
+                value = parsePlate(plateFiltered);
+                if (value.length()) return true;
             }
 
-            fixValue(value);
-            return value.length() > 0;
+            return false;
         }
     };
 
