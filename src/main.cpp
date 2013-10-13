@@ -4,10 +4,10 @@
 #include "recognizer.h"
 
 int main(int argc, char* argv[]) {
-
-    std::string answer;
-    anpr::Recognizer r;
-    CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
+	
+	std::string answer;
+	anpr::Recognizer r;
+	CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
 
 	bool showGui = (argc > 1) && (!strcmp(argv[1], "gui"));
 
@@ -17,18 +17,18 @@ int main(int argc, char* argv[]) {
 	}
     
 	while (true) {
-        IplImage* frame = cvQueryFrame(capture);
-        cv::Mat frameMat = frame;
-        if (r.RecognizePlateNumber(frameMat, answer)) {
-            std::cout << answer << std::endl;
-        }
+		IplImage* frame = cvQueryFrame(capture);
+		cv::Mat frameMat = frame;
+		if (r.RecognizePlateNumber(frameMat, answer)) {
+			std::cout << answer << std::endl;
+		}
 		if (showGui) {
 			cv::imshow("Camera", frameMat);
 			if ((cvWaitKey(10) & 255) == 27) {
 				break;
 			}
 		}
-    }
+	}
 
-    return 0;
+	return 0;
 }
