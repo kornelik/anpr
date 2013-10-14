@@ -12,7 +12,7 @@
 int main(int argc, char* argv[]) {
 	
 	std::string answer;
-	anpr::Recognizer r;
+	anpr::Recognizer* r = new anpr::Recognizer("train/");
 	CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
 
 	bool showGui = (argc > 1) && (!strcmp(argv[1], "--gui"));
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 	while (true) {
 		IplImage* frame = cvQueryFrame(capture);
 		cv::Mat frameMat = frame;
-		if (r.RecognizePlateNumber(frameMat, answer)) {
+		if (r->RecognizePlateNumber(frameMat, answer)) {
 			std::cout << answer << std::endl;
 		}
 		if (showGui) {
