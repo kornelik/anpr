@@ -1,4 +1,4 @@
-LIBS=$(shell pkg-config --libs opencv) -ltesseract
+LIBS=$(shell pkg-config --libs opencv)
 CFLAGS=-Wall -Werror -O2
 LDFLAGS=
 

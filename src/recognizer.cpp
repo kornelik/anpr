@@ -1,10 +1,9 @@
 #include "recognizer.h"
 
-#include <opencv2/imgproc/imgproc.hpp>
-#include <opencv2/highgui/highgui.hpp>
+#include "ocr_char.h"
+#include "util.h"
 
-#include <tesseract/baseapi.h>
-
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
@@ -12,7 +11,7 @@ namespace anpr {
 
     class Recognizer::Impl {
     private:
-        tesseract::TessBaseAPI ocr_;
+        OCRChar ocrLetter_, ocrNumber_;
 
         static void fixBox(cv::RotatedRect& box) {
             if (box.angle < -45.0) {
@@ -76,6 +75,8 @@ namespace anpr {
         }
 
         #define SYMBOLS "ABCEHIKMOPTX0123456789"
+        #define SYMBOLS_NUMBERS "0123456789"
+        #define SYMBOLS_CHARS "ABCEHIKMOPTX"
 
         static bool isNotGoodLetter(char ch) {
             return strchr(SYMBOLS, ch) == NULL;
@@ -88,10 +89,64 @@ namespace anpr {
             if (value.length() < 5) value = "";
         }
 
+        static bool rectContain(cv::Rect r1, cv::Rect r2) {
+            return r1.x <= r2.x && r1.y <= r2.y && r1.x + r1.width >= r2.x + r2.width && r1.y + r1.height >= r2.y + r2.height;
+        }
+
+        static bool rectByX(const cv::Rect& r1, const cv::Rect& r2) {
+            return r1.x < r2.x;
+        }
+
+        std::string parsePlate(const cv::Mat& plate) {
+            cv::Mat psize, pcanny;
+
+            std::vector< std::vector<cv::Point> > contours;
+            cv::Mat paint(plate.size(), CV_8U);
+            cv::Canny(plate, pcanny, 100, 50, 3);
+            plate.copyTo(paint);
+            cv::findContours(pcanny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
+
+            std::vector<cv::Rect> possible;
+            for (size_t i = 0; i < contours.size(); ++i) {
+                cv::Rect rect = cv::boundingRect(contours[i]);
+                if (rect.height < 0.6 * plate.size().height || rect.width <= 5)  continue;
+
+                bool add = true;
+                for (size_t j = 0; j < possible.size(); ++j) {
+                    if (rectContain(possible[j], rect)) {
+                        possible[j] = rect;
+                        add = false;
+                        break;
+                    }
+                    if (rectContain(rect, possible[j])) {
+                        add = false;
+                        break;
+                    }
+                }
+                if (add) {
+                    possible.push_back(rect);
+                }
+            }
+            if (possible.size() == 7) {
+                std::string result;
+                std::sort(possible.begin(), possible.end(), rectByX);
+
+                cv::Mat plate2;
+                cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 11, 0);
+
+				for (size_t i = 0; i < 4; ++i) result += ocrNumber_.Classify(cv::Mat(plate2, possible[i]));
+                for (size_t i = 4; i < 6; ++i) result += ocrLetter_.Classify(cv::Mat(plate2, possible[i]));
+                for (size_t i = 6; i < 7; ++i) result += ocrNumber_.Classify(cv::Mat(plate2, possible[i]));
+
+                fixValue(result);
+                return result;
+            }
+
+            return "";
+        }
+
     public:
-        Impl() {
-            ocr_.Init(NULL, "eng");
-            ocr_.SetVariable("tessedit_char_whitelist", SYMBOLS);
+        Impl(const std::string& learn_path) : ocrLetter_(learn_path, SYMBOLS_CHARS), ocrNumber_(learn_path, SYMBOLS_NUMBERS) {
         }
 
         bool RecognizePlateNumber(cv::Mat image, std::string& value) {
@@ -120,17 +175,15 @@ namespace anpr {
                 cv::warpAffine(plateImage, plateStraight, rotation, plateImage.size(), cv::INTER_CUBIC);
                 cv::getRectSubPix(plateStraight, box.size, cv::Point(box.center.x - plateRect.x, box.center.y - plateRect.y), plateFiltered);
 
-                ocr_.SetImage((uchar*)plateFiltered.data, plateFiltered.cols, plateFiltered.rows, plateFiltered.channels(), plateFiltered.step1());
-                ocr_.SetRectangle(0, 0, plateFiltered.cols, plateFiltered.rows);
-                value += ocr_.GetUTF8Text();
+                value = parsePlate(plateFiltered);
+                if (value.length()) return true;
             }
 
-            fixValue(value);
-            return value.length() > 0;
+            return false;
         }
     };
 
-    Recognizer::Recognizer() : impl_(new Impl()) { }
+    Recognizer::Recognizer(const std::string& learn_path) : impl_(new Impl(learn_path)) { }
 
     Recognizer::~Recognizer() { delete impl_; }
 
