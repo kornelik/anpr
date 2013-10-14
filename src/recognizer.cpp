@@ -3,6 +3,8 @@
 #include "ocr_char.h"
 #include "util.h"
 
+#include <tesseract/baseapi.h>
+
 #include <iostream>
 #include <vector>
 #include <algorithm>
@@ -141,12 +143,20 @@ namespace anpr {
                 fixValue(result);
                 return result;
             }
-
-            return "";
+            ocr_.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
+            ocr_.SetVariable("tessedit_char_whitelist", SYMBOLS);
+            ocr_.SetImage((uchar*)plate.data, plate.cols, plate.rows, plate.channels(), plate.step1());
+            ocr_.SetRectangle(0, 0, plate.cols, plate.rows);
+            std::string result = ocr_.GetUTF8Text();
+            fixValue(result);
+            return result;
         }
+
+        tesseract::TessBaseAPI ocr_;
 
     public:
         Impl(const std::string& learn_path) : ocrLetter_(learn_path, SYMBOLS_CHARS), ocrNumber_(learn_path, SYMBOLS_NUMBERS) {
+            ocr_.Init(NULL, "eng");
         }
 
         bool RecognizePlateNumber(cv::Mat image, std::string& value) {
