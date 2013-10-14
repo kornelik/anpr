@@ -2,11 +2,11 @@
 
 static struct termios g_old_kbd_mode;
 
-static void cooked(void) {
+void cooked(void) {
 	tcsetattr(0, TCSANOW, &g_old_kbd_mode);
 }
 
-static void raw(void) {
+void raw(void) {
 	static char init;
 	struct termios new_kbd_mode;
 
@@ -25,7 +25,7 @@ static void raw(void) {
 	init = 1;
 }
 
-static int kbhit(void) {
+int kbhit(void) {
 	struct timeval timeout;
 	fd_set read_handles;
 	int status;
@@ -42,7 +42,7 @@ static int kbhit(void) {
 	return status;
 }
 
-static int getch(void) {
+int getch(void) {
 	unsigned char temp;
 	raw();
 	if(read(0, &temp, 1) != 1) {
