@@ -146,7 +146,7 @@ namespace anpr {
         }
 
     public:
-        Impl(const std::string& learn_path) : ocrNumber_(learn_path, SYMBOLS_NUMBERS), ocrLetter_(learn_path, SYMBOLS_CHARS) {
+        Impl(const std::string& learn_path) : ocrLetter_(learn_path, SYMBOLS_CHARS), ocrNumber_(learn_path, SYMBOLS_NUMBERS) {
         }
 
         bool RecognizePlateNumber(cv::Mat image, std::string& value) {
