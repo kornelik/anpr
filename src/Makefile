@@ -2,7 +2,7 @@ LIBS=$(shell pkg-config --libs opencv)
 CFLAGS=-Wall -Werror -O2
 LDFLAGS=
 
-SOURCES=main.cpp recognizer.cpp
+SOURCES=main.cpp recognizer.cpp conio.cpp ocr_char.cpp
 TARGET=anpr
 
 all: clean $(SOURCES) $(TARGET)
@@ -13,8 +13,8 @@ $(TARGET): $(OBJECTS)
 run:
 	./$(TARGET)
 
-test: clean recognizer.cpp recognizer_ut.cpp
-	$(CXX) $(CFLAGS) $(LDFLAGS) recognizer.cpp recognizer_ut.cpp -o testing $(LIBS)
+test: clean recognizer.cpp recognizer_quality.cpp ocr_char.cpp
+	$(CXX) $(CFLAGS) $(LDFLAGS) recognizer.cpp recognizer_quality.cpp ocr_char.cpp -o testing $(LIBS)
 	./testing
 
 clean:

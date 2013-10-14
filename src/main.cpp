@@ -10,9 +10,9 @@
 #include "recognizer.h"
 
 int main(int argc, char* argv[]) {
-	
+
 	std::string answer;
-	anpr::Recognizer* r = new anpr::Recognizer("train/");
+	anpr::Recognizer r("train/");
 	CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
 
 	bool showGui = (argc > 1) && (!strcmp(argv[1], "--gui"));
@@ -21,11 +21,11 @@ int main(int argc, char* argv[]) {
 		cvNamedWindow("Camera", 0);
 		cvResizeWindow("Camera", 640, 350);
 	}
-    
+
 	while (true) {
 		IplImage* frame = cvQueryFrame(capture);
 		cv::Mat frameMat = frame;
-		if (r->RecognizePlateNumber(frameMat, answer)) {
+		if (r.RecognizePlateNumber(frameMat, answer)) {
 			std::cout << answer << std::endl;
 		}
 		if (showGui) {
@@ -43,3 +43,4 @@ int main(int argc, char* argv[]) {
 	cvReleaseCapture(&capture);
 	return 0;
 }
+

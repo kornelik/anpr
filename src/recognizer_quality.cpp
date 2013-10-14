@@ -70,7 +70,7 @@ int main()
 {
 	try {
 		std::string v;
-		anpr::Recognizer r("C:\\Study\\BSU\\ANPR\\anpr\\src\\train\\");
+		anpr::Recognizer r("train/");
 
 	//    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
 
@@ -79,7 +79,7 @@ int main()
 
 		int test_images_count = sizeof(test_images) / sizeof(test_images[0]);
 		for (int testi = 0; testi < test_images_count; ++testi) {
-			cv::Mat img = cv::imread(std::string("C:\\Study\\BSU\\ANPR\\anpr\\src\\tests\\") + test_images[testi]);
+			cv::Mat img = cv::imread(std::string("tests/") + test_images[testi]);
 
 			std::cout << "Answer: " << std::setw(10) << test_result[testi] << ", Got: ";
 			v = "";

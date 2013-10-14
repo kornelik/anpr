@@ -15,7 +15,7 @@ public:
     Impl(const std::string& learnpath, const std::string& allchars)
     {
 		std::set<char> goodChars(allchars.begin(), allchars.end());
-		std::ifstream train(learnpath + std::string("/train.txt"));
+		std::ifstream train((learnpath + "/train.txt").c_str());
 		std::vector< std::pair<char, std::string> > samples;
 		char symbol;
 		std::string imageFile;
@@ -28,7 +28,7 @@ public:
         for (size_t i = 0; i < samples.size(); ++i) {
 			std::string path = learnpath + samples[i].second;
             cv::Mat inp = cv::imread(path, 0), out, canny;
-			if (inp.empty()) throw std::exception((std::string("Cannot read file ") + path).c_str());
+			if (inp.empty()) continue;
 			cv::Canny(inp, canny, 100, 50, 3);
 			std::vector< std::vector<cv::Point> > contours;
 			cv::findContours(canny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
@@ -59,7 +59,7 @@ public:
 };
 
 
-OCRChar::OCRChar(const std::string& learn_path, const std::string& possible_chars) 
+OCRChar::OCRChar(const std::string& learn_path, const std::string& possible_chars)
     : impl_(new Impl(learn_path, possible_chars)) {}
 
 OCRChar::~OCRChar() {

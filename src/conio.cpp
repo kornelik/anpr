@@ -1,5 +1,12 @@
 #include "conio.h"
 
+#include <memory.h>
+#include <sys/time.h>
+#include <termios.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
+
 static struct termios g_old_kbd_mode;
 
 void cooked(void) {
