@@ -1,6 +1,11 @@
 #include <opencv2/highgui/highgui.hpp>
-#include <conio.h>
 #include <iostream>
+
+#ifdef _WIN32
+#include <conio.h>
+#elif __linux__
+#include "conio.h"
+#endif
 
 #include "recognizer.h"
 
