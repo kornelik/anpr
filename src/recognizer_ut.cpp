@@ -1,4 +1,4 @@
-#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/opencv.hpp>
 #include <iostream>
 #include <iomanip>
 #include "recognizer.h"
@@ -68,36 +68,40 @@ typename T::size_type levenshtein_distance(const T & src, const T & dst) {
 
 int main()
 {
-    std::string v;
-    anpr::Recognizer r;
+	try {
+		std::string v;
+		anpr::Recognizer r("C:\\Study\\BSU\\ANPR\\anpr\\src\\train\\");
 
-//    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
+	//    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
 
-    size_t errorPrecision = 0;
-    size_t errorRecall = 0;
+		size_t errorPrecision = 0;
+		size_t errorRecall = 0;
 
-    int test_images_count = sizeof(test_images) / sizeof(test_images[0]);
-    for (int testi = 0; testi < test_images_count; ++testi) {
-        cv::Mat img = cv::imread(std::string("tests/") + test_images[testi]);
+		int test_images_count = sizeof(test_images) / sizeof(test_images[0]);
+		for (int testi = 0; testi < test_images_count; ++testi) {
+			cv::Mat img = cv::imread(std::string("C:\\Study\\BSU\\ANPR\\anpr\\src\\tests\\") + test_images[testi]);
 
-        std::cout << "Answer: " << std::setw(10) << test_result[testi] << ", Got: ";
-        v = "";
-        if (r.RecognizePlateNumber(img, v)) {
-            std::cout << std::setw(10) << v;
+			std::cout << "Answer: " << std::setw(10) << test_result[testi] << ", Got: ";
+			v = "";
+			if (r.RecognizePlateNumber(img, v)) {
+				std::cout << std::setw(10) << v;
 
-            size_t curError = levenshtein_distance(v, std::string(test_result[testi]));
-            std::cout << ", Error: " << curError << std::endl;
-            errorPrecision += curError;
-        } else {
-            std::cout << std::setw(10) << "" << ", Not found" << std::endl;
-            ++errorRecall;
-        }
-//        cv::imshow("Test", img);
-//        cv::waitKey(0);
-    }
+				size_t curError = levenshtein_distance(v, std::string(test_result[testi]));
+				std::cout << ", Error: " << curError << std::endl;
+				errorPrecision += curError;
+			} else {
+				std::cout << std::setw(10) << "" << ", Not found" << std::endl;
+				++errorRecall;
+			}
+	//        cv::imshow("Test", img);
+	//        cv::waitKey(0);
+		}
 
-    std::cout << "Precision error: " << errorPrecision << std::endl;
-    std::cout << "Recall error: " << double(errorRecall * 100) / test_images_count << "%" << std::endl;
+		std::cout << "Precision error: " << errorPrecision << std::endl;
+		std::cout << "Recall error: " << double(errorRecall * 100) / test_images_count << "%" << std::endl;
+	} catch(std::exception& e) {
+		std::cerr << "Fatal error: " << e.what() << std::endl;
+	}
     return 0;
 }
 

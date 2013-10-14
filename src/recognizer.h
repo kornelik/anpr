@@ -1,8 +1,8 @@
-#include <opencv2/core/core.hpp>
+#include <opencv2/opencv.hpp>
 #include <string>
 
 namespace anpr {
-
+	
 class Recognizer {
 private:
     Recognizer(const Recognizer&) {};
@@ -11,7 +11,7 @@ private:
     Impl* impl_;
 
 public:
-    Recognizer();
+    Recognizer(const std::string& learn_path);
     ~Recognizer();
     bool RecognizePlateNumber(cv::Mat image, std::string& value);
 };
