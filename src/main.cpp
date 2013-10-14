@@ -1,4 +1,5 @@
 #include <opencv2/highgui/highgui.hpp>
+#include <conio.h>
 #include <iostream>
 
 #include "recognizer.h"
@@ -9,7 +10,7 @@ int main(int argc, char* argv[]) {
 	anpr::Recognizer r;
 	CvCapture* capture = cvCreateCameraCapture(CV_CAP_ANY);
 
-	bool showGui = (argc > 1) && (!strcmp(argv[1], "gui"));
+	bool showGui = (argc > 1) && (!strcmp(argv[1], "--gui"));
 
 	if (showGui) {
 		cvNamedWindow("Camera", 0);
@@ -25,10 +26,15 @@ int main(int argc, char* argv[]) {
 		if (showGui) {
 			cv::imshow("Camera", frameMat);
 			if ((cvWaitKey(10) & 255) == 27) {
+				cvDestroyWindow("Camera");
 				break;
 			}
 		}
-	}
+		if (kbhit() && getch() == 32) {
+			break;
+		}
+    }
 
+	cvReleaseCapture(&capture);
 	return 0;
 }
