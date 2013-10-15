@@ -2,7 +2,7 @@
 #include <string>
 
 namespace anpr {
-	
+
 class Recognizer {
 private:
     Recognizer(const Recognizer&) {};

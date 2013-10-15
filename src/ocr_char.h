@@ -12,7 +12,7 @@ private:
 
 public:
     OCRChar(const std::string& learn_path, const std::string& possible_chars);
-	virtual ~OCRChar();
+    virtual ~OCRChar();
 
     char Classify(cv::Mat image);
 };
