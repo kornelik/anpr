@@ -9,8 +9,8 @@ using namespace cv;
 #define PLATES_PATH "tests/"
 #define SAMPLE_PATH "../src/train/"
 
-static const char* plates[]  = {"1.jpg", "2.jpg", "3.jpg", "4.jpg"};
-static const char* numbers[] = {"S6436", "6827IA5", "1188MH7", "6969MX7"};
+static const char* plates[]  = {"2.jpg", "3.jpg", "4.jpg"};
+static const char* numbers[] = {"6827IA5", "1188MH7", "6969MX7"};
 static const char* emptys[]  = {"5.jpg", "6.jpg"};
 
 CPPUNIT_TEST_SUITE_REGISTRATION(TestRecognizer);
