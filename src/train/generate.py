@@ -1,6 +1,6 @@
 from PIL import ImageDraw, Image, ImageFont
 
-fonts = ["lucon.ttf", "courbd.ttf", "arialbd.ttf", "BRITANIC.TTF", "BRLNSR.ttf", "BRLNSDB.ttf", "ARLRDBD.ttf", "COPRGTB.ttf", "COPRGTL.ttf", "tahoma.ttf", "tahomabd.ttf", "TCM_____.ttf"]
+fonts = ["lucon.ttf", "courbd.ttf", "arialbd.ttf", "BRITANIC.TTF", "BRLNSR.ttf", "BRLNSDB.ttf", "ARLRDBD.ttf", "COPRGTB.ttf", "COPRGTL.ttf", "tahoma.ttf", "tahomabd.ttf", "TCM_____.ttf", "4115417.ttf"]
 #fonts = ["lucon.ttf", "courbd.ttf", "arialbd.ttf", "BRITANIC.TTF", "COPRGTL.ttf", "tahoma.ttf", "tahomabd.ttf", "TCM_____.ttf"]
 it = 0 
 for f in fonts:
