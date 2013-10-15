@@ -16,7 +16,6 @@ const char * test_images[] = {
     "IMAG0608.jpg",
     "IMAG0609.jpg",
     "IMAG0610.jpg",
-    "IMAG0611.jpg",
     "IMAG0612.jpg",
     "IMAG0613.jpg"
 };
@@ -34,7 +33,6 @@ const char * test_result[] = {
     "8894OT7",
     "7021OH7",
     "3841MA7",
-    "2326IX7",
     "0057IM7",
     "7977OA7"
 };
@@ -72,8 +70,6 @@ int main()
 		std::string v;
 		anpr::Recognizer r("train/");
 
-	//    cv::namedWindow("Test", CV_WINDOW_AUTOSIZE);
-
 		size_t errorPrecision = 0;
 		size_t errorRecall = 0;
 
@@ -93,8 +89,6 @@ int main()
 				std::cout << std::setw(10) << "" << ", Not found" << std::endl;
 				++errorRecall;
 			}
-	//        cv::imshow("Test", img);
-	//        cv::waitKey(0);
 		}
 
 		std::cout << "Precision error: " << errorPrecision << std::endl;

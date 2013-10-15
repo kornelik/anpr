@@ -3,7 +3,7 @@ LIBS += $(shell pkg-config --libs opencv) -ltesseract
 CFLAGS +=-Wall -Werror -O2
 LDFLAGS += $(LIBS)
 
-SOURCES := main.cpp recognizer.cpp conio.cpp ocr_char.cpp
+SOURCES := main.cpp recognizer.cpp conio.cpp ocr_char.cpp util.cpp
 OBJECTS := $(SOURCES:.cpp=.o)
 TARGET := anpr
 
@@ -19,7 +19,7 @@ run:
 	./$(TARGET)
 
 test: $(OBJECTS) recognizer_quality.o
-	$(CXX) recognizer.o recognizer_quality.o ocr_char.o -o testing $(LDFLAGS)
+	$(CXX) recognizer.o recognizer_quality.o ocr_char.o util.o -o testing $(LDFLAGS)
 	./testing
 
 clean:

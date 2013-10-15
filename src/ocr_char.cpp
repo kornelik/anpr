@@ -50,6 +50,7 @@ public:
 
     char Classify(cv::Mat image) {
         cv::Mat bin;
+        cv::adaptiveThreshold(image, image, 255, cv::ADAPTIVE_THRESH_MEAN_C, cv::THRESH_BINARY, 11, 0);
         cv::resize(image, bin, cv::Size(10, 16), 0, 0, cv::INTER_CUBIC);
         cv::Mat sample(1, FEATURE_COUNT, cv::DataType<float>::type);
         for (size_t i = 0; i < FEATURE_COUNT; ++i) sample.at<float>(0, i) = bin.data[i];
