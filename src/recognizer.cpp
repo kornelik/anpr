@@ -135,24 +135,12 @@ namespace anpr {
             cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, plate.cols + 1 - (plate.cols & 1),  3);
             cv::Canny(plate2, pcanny, 100, 70, 5);
 
-            //debug(plate);
-            //debug(plate2);
-            //debug(pcanny);
-
             cv::findContours(pcanny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
             std::sort(contours.begin(), contours.end(), contByArea);
             std::vector<cv::Rect> possible;
             for (size_t i = 0; i < contours.size(); ++i) {
                 cv::Rect rect = cv::boundingRect(contours[i]);
                 if (rect.height < 0.6 * plate.size().height || rect.width <= 2 || rect.x < plate.size().width / 10)  continue;
-
-                /*plate.copyTo(paint);
-                for (size_t j = 0; j < possible.size(); ++j) {
-                    cv::rectangle(paint, possible[j], cv::Scalar(0, 0, 0));
-                }
-                cv::rectangle(paint, rect, cv::Scalar(50, 50, 50));
-                debug(paint);
-                */
 
                 bool add = true;
                 for (size_t j = 0; j < possible.size(); ++j) {
@@ -180,12 +168,6 @@ namespace anpr {
                 if (add) {
                     possible.push_back(rect);
                 } else continue;
-
-                /*plate.copyTo(paint);
-                for (size_t j = 0; j < possible.size(); ++j) {
-                    cv::rectangle(paint, possible[j], cv::Scalar(0, 0, 0));
-                }
-                debug(paint);*/
             }
             if (possible.size() == 7) {
                 std::string result;
@@ -242,13 +224,6 @@ namespace anpr {
                 box.center.y -= plateRect.y;
 
                 cv::Mat rotation  = cv::getRotationMatrix2D(cv::Point(box.center.x, box.center.y), box.angle, 1);
-                /*cv::Point2f src[4];
-                cv::Point2f dst[4];
-                box.points(src);
-                dst[1] = cv::Point2f(0, 0);
-                dst[2] = cv::Point2f(plateImage.cols, 0);
-                dst[0] = cv::Point2f(0, plateImage.rows);
-                cv::Mat rotation = cv::getAffineTransform(src, dst); */
                 cv::warpAffine(plateImage, plateStraight, rotation, plateImage.size(), cv::INTER_CUBIC);
                 cv::getRectSubPix(plateStraight, box.size, cv::Point(box.center.x, box.center.y), plateFiltered);
 

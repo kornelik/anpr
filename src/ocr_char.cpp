@@ -55,16 +55,6 @@ public:
         cv::Mat sample(1, FEATURE_COUNT, cv::DataType<float>::type);
         for (size_t i = 0; i < FEATURE_COUNT; ++i) sample.at<float>(0, i) = bin.data[i];
 		char result = (char)(oracle.find_nearest(sample, 1) + 1e-5);
-
-/*        static int cnt = 0;
-        std::stringstream ss;
-        std::string fn;
-        ss << cnt << "_" << result << ".png";
-        ss >> fn;
-
-        ++cnt;
-        cv::imwrite(fn, bin);
-*/
 		return result;
     }
 };
