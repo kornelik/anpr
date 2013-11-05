@@ -9,6 +9,15 @@
 #include <vector>
 #include <algorithm>
 
+#define RIGHT_ANGLE 90.0f
+#define HALF_RIGHT_ANGLE 45.0f
+#define BLUR_SIZE 3
+#define CANNY_PARAM 100
+#define MAX_VALUE_LENGTH 15
+#define PLATE_HEIGHT_RATIO 0.6
+#define PLATE_WIDTH_BOUND 10
+#define POSSIBLE_RECT_SIZE 7
+
 namespace anpr {
 
     class Recognizer::Impl {
@@ -16,15 +25,17 @@ namespace anpr {
         OCRChar ocrLetter_, ocrNumber_;
 
         static void fixBox(cv::RotatedRect& box) {
-            if (box.angle < -45.0) {
+			if (box.angle < -HALF_RIGHT_ANGLE) {
                 std::swap(box.size.width, box.size.height);
-                box.angle += 90.0f;
+				box.angle += RIGHT_ANGLE;
             } else
-                if (box.angle > 45.0) {
+				if (box.angle > HALF_RIGHT_ANGLE) {
                     std::swap(box.size.width, box.size.height);
-                    box.angle -= 90.0f;
+					box.angle -= RIGHT_ANGLE;
                 }
         }
+
+		//TODO: trace, const, toolchain, fix recognition
 
         static void findLicensePlate(const std::vector< std::vector<cv::Point> >& contours,
                 const std::vector<cv::Vec4i>& hier,
@@ -33,6 +44,8 @@ namespace anpr {
         {
             #define HIER_NEXT(id) hier[id][0]
             #define HIER_CHILD(id) hier[id][2]
+			const int CHILDREN_COUNT = 10;
+			const int MAX_CHILDREN_COUNT = 7;
             const int MIN_PLATE_AREA = 400;
             const double AREA_SHAPE_EPS = 0.7;
             const double MIN_BOX_RATIO = 3.0;
@@ -42,11 +55,11 @@ namespace anpr {
                 if (HIER_CHILD(id) == -1) continue;
 
                 if (cv::contourArea(contours[id]) > MIN_PLATE_AREA) {
-                    int childCnt = 0;
+					int childCnt = CHILDREN_COUNT;
                     for (int child = HIER_CHILD(id); child != -1; child = HIER_NEXT(child)) ++childCnt;
-                    if (childCnt < 7) {
+					if (childCnt < MAX_CHILDREN_COUNT) {
                         findLicensePlate(contours, hier, HIER_CHILD(id), plates);
-                        continue;
+                        //continue;
                     }
 
                     cv::RotatedRect box = cv::minAreaRect(contours[id]);
@@ -70,8 +83,8 @@ namespace anpr {
         static void preprocessImage(cv::Mat img, cv::Mat& gray, cv::Mat& binary){
             cv::Mat timg;
             cv::cvtColor(img, gray, CV_BGR2GRAY);
-            cv::blur(gray, timg, cv::Size(3, 3));
-            cv::Canny(timg, binary, 100, 50, 5);
+			cv::blur(gray, timg, cv::Size(BLUR_SIZE, BLUR_SIZE));
+			cv::Canny(timg, binary, CANNY_PARAM, CANNY_PARAM / 2, CANNY_PARAM / 20);
         }
 
         #define SYMBOLS "ABCEHIKMOPTX0123456789"
@@ -86,7 +99,7 @@ namespace anpr {
             value.erase(std::remove_if(value.begin(), value.end(), isNotGoodLetter), value.end());
             while (value.length() > 0 && !isdigit(value[0])) value.erase(value.begin());
             while (value.length() > 0 && !isdigit(value[value.length() - 1])) value.erase(value.end() - 1);
-            if (value.length() < 5) value = "";
+			if (value.length() < MAX_VALUE_LENGTH) value = "";
         }
 
         static bool isRectContains(const cv::Rect& r1, const cv::Rect& r2) {
@@ -132,15 +145,17 @@ namespace anpr {
             std::vector< std::vector<cv::Point> > contours;
             cv::Mat paint(plate.size(), CV_8U), plate2;
 
-            cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY, plate.cols + 1 - (plate.cols & 1),  3);
-            cv::Canny(plate2, pcanny, 100, 70, 5);
+            cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,
+		plate.cols + 1 - (plate.cols & 1),  3);
+			cv::Canny(plate2, pcanny, CANNY_PARAM, CANNY_PARAM - 30, CANNY_PARAM / 20);
 
             cv::findContours(pcanny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
             std::sort(contours.begin(), contours.end(), contByArea);
             std::vector<cv::Rect> possible;
             for (size_t i = 0; i < contours.size(); ++i) {
                 cv::Rect rect = cv::boundingRect(contours[i]);
-                if (rect.height < 0.6 * plate.size().height || rect.width <= 2 || rect.x < plate.size().width / 10)  continue;
+				if (rect.height < PLATE_HEIGHT_RATIO * plate.size().height || rect.width <= 2 ||
+					rect.x < plate.size().width / PLATE_WIDTH_BOUND)  continue;
 
                 bool add = true;
                 for (size_t j = 0; j < possible.size(); ++j) {
@@ -169,7 +184,7 @@ namespace anpr {
                     possible.push_back(rect);
                 } else continue;
             }
-            if (possible.size() == 7) {
+			if (possible.size() == POSSIBLE_RECT_SIZE) {
                 std::string result;
                 std::sort(possible.begin(), possible.end(), rectByX);
 
