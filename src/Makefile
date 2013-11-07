@@ -10,16 +10,16 @@ TARGET := anpr
 all: $(SOURCES) $(TARGET)
 
 .cpp.o:
-	$(CXX) $(CFLAGS) -c $< -o $@
+	$(CROSS_COMPILE)-$(CXX) $(CFLAGS) -c $< -o $@
 
 $(TARGET): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
+	$(CROSS_COMPILE)-$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
 run:
 	./$(TARGET)
 
 test: $(OBJECTS) recognizer_quality.o
-	$(CXX) recognizer.o recognizer_quality.o ocr_char.o util.o -o testing $(LDFLAGS)
+	$(CROSS_COMPILE)-$(CXX) recognizer.o recognizer_quality.o ocr_char.o util.o -o testing $(LDFLAGS)
 	./testing
 
 clean:
