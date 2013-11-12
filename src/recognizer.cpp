@@ -14,10 +14,15 @@ namespace anpr {
     const double HALF_RIGHT_ANGLE = RIGHT_ANGLE / 2.;
     const double BLUR_SIZE = 3;
     const double CANNY_PARAM = 100;
-    const size_t MAX_VALUE_LENGTH = 15;
+    const size_t MAX_VALUE_LENGTH = 5;
     const double PLATE_HEIGHT_RATIO = 0.6f;
     const double PLATE_WIDTH_BOUND = 10;
     const double POSSIBLE_RECT_SIZE = 7;
+	const size_t CONTOUR_THICKNESS = 2;
+	const size_t LINE_CONNECTIVITY = 8;
+	const size_t MAX_COLOR_COMP = 255;
+	const size_t MAX_THRESHOLD = 255;
+	const size_t THRESHOLD_CONST = 3;
 
     class Recognizer::Impl {
     private:
@@ -34,8 +39,6 @@ namespace anpr {
                 }
         }
 
-		//TODO: trace, const, toolchain, fix recognition
-
         static void findLicensePlate(const std::vector< std::vector<cv::Point> >& contours,
                 const std::vector<cv::Vec4i>& hier,
                 int id,
@@ -43,7 +46,7 @@ namespace anpr {
         {
             #define HIER_NEXT(id) hier[id][0]
             #define HIER_CHILD(id) hier[id][2]
-			const int CHILDREN_COUNT = 10;
+			const int CHILDREN_COUNT = 0;
 			const int MAX_CHILDREN_COUNT = 7;
             const int MIN_PLATE_AREA = 400;
             const double AREA_SHAPE_EPS = 0.7;
@@ -58,7 +61,7 @@ namespace anpr {
                     for (int child = HIER_CHILD(id); child != -1; child = HIER_NEXT(child)) ++childCnt;
 					if (childCnt < MAX_CHILDREN_COUNT) {
                         findLicensePlate(contours, hier, HIER_CHILD(id), plates);
-                        //continue;
+                        continue;
                     }
 
                     cv::RotatedRect box = cv::minAreaRect(contours[id]);
@@ -146,8 +149,8 @@ namespace anpr {
             std::vector< std::vector<cv::Point> > contours;
             cv::Mat paint(plate.size(), CV_8U), plate2;
 
-            cv::adaptiveThreshold(plate, plate2, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,
-		plate.cols + 1 - (plate.cols & 1),  3);
+            cv::adaptiveThreshold(plate, plate2, MAX_THRESHOLD, cv::ADAPTIVE_THRESH_GAUSSIAN_C, cv::THRESH_BINARY,
+		plate.cols + 1 - (plate.cols & 1), THRESHOLD_CONST);
 			cv::Canny(plate2, pcanny, CANNY_PARAM, CANNY_PARAM - 30, CANNY_PARAM / 20);
 
             cv::findContours(pcanny, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
@@ -229,7 +232,8 @@ namespace anpr {
 
             value = "";
             for (size_t i = 0; i < plates.size(); ++i) {
-                cv::drawContours(image, contours, plates[i], cv::Scalar(0, 0, 255), 2, 8, hierarchy, 0, cv::Point());
+                cv::drawContours(image, contours, plates[i], cv::Scalar(0, 0, MAX_COLOR_COMP),
+					CONTOUR_THICKNESS, LINE_CONNECTIVITY, hierarchy, 0, cv::Point());
 
                 cv::Rect plateRect  = cv::boundingRect(contours[plates[i]]);
                 cv::Mat plateImage  = cv::Mat(gray, plateRect), plateStraight, plateFiltered;
@@ -259,7 +263,6 @@ namespace anpr {
         return impl_->RecognizePlateNumber(image, value);
     }
 }
-
 
 #undef SYMBOLS
 #undef SYMBOLS_NUMBERS
