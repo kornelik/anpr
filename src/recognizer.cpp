@@ -78,6 +78,8 @@ namespace anpr {
                     plates.push_back(id);
                 }
             }
+            #undef HIER_NEXT
+            #undef HIER_CHILD
         }
 
         static void preprocessImage(cv::Mat img, cv::Mat& gray, cv::Mat& binary){
@@ -259,3 +261,7 @@ namespace anpr {
     }
 }
 
+
+#undef SYMBOLS
+#undef SYMBOLS_NUMBERS
+#undef SYMBOLS_CHARS
