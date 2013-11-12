@@ -9,16 +9,15 @@
 #include <vector>
 #include <algorithm>
 
-#define RIGHT_ANGLE 90.0f
-#define HALF_RIGHT_ANGLE 45.0f
-#define BLUR_SIZE 3
-#define CANNY_PARAM 100
-#define MAX_VALUE_LENGTH 15
-#define PLATE_HEIGHT_RATIO 0.6
-#define PLATE_WIDTH_BOUND 10
-#define POSSIBLE_RECT_SIZE 7
-
 namespace anpr {
+    const double RIGHT_ANGLE = 90.0f;
+    const double HALF_RIGHT_ANGLE = RIGHT_ANGLE / 2.;
+    const double BLUR_SIZE = 3;
+    const double CANNY_PARAM = 100;
+    const size_t MAX_VALUE_LENGTH = 15;
+    const double PLATE_HEIGHT_RATIO = 0.6f;
+    const double PLATE_WIDTH_BOUND = 10;
+    const double POSSIBLE_RECT_SIZE = 7;
 
     class Recognizer::Impl {
     private:
