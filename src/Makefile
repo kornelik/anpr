@@ -6,6 +6,7 @@ LDFLAGS += $(LIBS)
 SOURCES := main.cpp recognizer.cpp conio.cpp ocr_char.cpp util.cpp
 OBJECTS := $(SOURCES:.cpp=.o)
 TARGET := anpr
+TESTING_BINARY := testing_binary
 
 all: $(SOURCES) $(TARGET)
 
@@ -19,9 +20,10 @@ run:
 	./$(TARGET)
 
 test: $(OBJECTS) recognizer_quality.o
-	$(CROSS_COMPILE)-$(CXX) recognizer.o recognizer_quality.o ocr_char.o util.o -o testing $(LDFLAGS)
-	./testing
+	$(CROSS_COMPILE)-$(CXX) recognizer.o recognizer_quality.o ocr_char.o util.o -o $(TESTING_BINARY) $(LDFLAGS)
+	./$(TESTING_BINARY)
 
 clean:
 	rm -f $(TARGET)
 	rm -f $(OBJECTS)
+	rm -f $(TESTING_BINARY)
