@@ -1,3 +1,4 @@
+#pragma once
 
 void cooked(void);
 void raw(void);
