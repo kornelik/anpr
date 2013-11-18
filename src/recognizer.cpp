@@ -236,19 +236,34 @@ namespace anpr {
 					CONTOUR_THICKNESS, LINE_CONNECTIVITY, hierarchy, 0, cv::Point());
 
                 cv::Rect plateRect  = cv::boundingRect(contours[plates[i]]);
-                cv::Mat plateImage  = cv::Mat(gray, plateRect), plateStraight, plateFiltered;
+                cv::Mat plateImage  = cv::Mat(gray, plateRect), plateStraight;
                 cv::RotatedRect box = cv::minAreaRect(contours[plates[i]]);
-                fixBox(box);
+				fixBox(box);
 
                 box.center.x -= plateRect.x;
                 box.center.y -= plateRect.y;
 
-                cv::Mat rotation  = cv::getRotationMatrix2D(cv::Point(box.center.x, box.center.y), box.angle, 1);
-                cv::warpAffine(plateImage, plateStraight, rotation, plateImage.size(), cv::INTER_CUBIC);
-                cv::getRectSubPix(plateStraight, box.size, cv::Point(box.center.x, box.center.y), plateFiltered);
+				/* Define preferred points */
+				cv::Point2f rectpoints[4];
+				rectpoints[1] = cv::Point2f(0, 0);
+				rectpoints[2] = cv::Point2f(box.size.width, 0);
+				rectpoints[3] = cv::Point2f(box.size.width, box.size.height);
+				rectpoints[0] = cv::Point2f(0, box.size.height);
+				
+				/* Get rotated rect points */
+				cv::Point2f boxPoints[4];
+				box.points(boxPoints);
 
-                value = parsePlate(plateFiltered);
-                if (value.length()) return true;
+				/* Get transformation matrix and perform transformation */
+				cv::Mat transform = cv::getPerspectiveTransform(boxPoints, rectpoints);
+				cv::warpPerspective(plateImage, plateStraight, transform, cv::Size(box.size.width, box.size.height));
+
+				/* Parse the plate number */
+				value = parsePlate(plateStraight);
+
+				if (value.length() == 7) {
+					return true;
+				}
             }
 
             return false;
