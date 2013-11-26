@@ -5,7 +5,7 @@
 using namespace std;
 using namespace cv;
 
-#define THRESHOLD 0.8
+#define THRESHOLD 1.0
 #define PLATES_PATH "tests/"
 #define SAMPLE_PATH "../src/train/"
 
@@ -20,8 +20,6 @@ static const char* plates[]  = {
     "IMAG0596.jpg",
     "IMAG0597.jpg",
     "IMAG0598.jpg",
-    "IMAG0600.jpg",
-    "IMAG0604.jpg",
     "IMAG0608.jpg",
     "IMAG0609.jpg",
     "IMAG0610.jpg",
@@ -40,8 +38,6 @@ static const char* numbers[] = {
     "1501BT7",
     "1188MH7",
     "7778MB7",
-    "0689MK7",
-    "5617IP7",
     "8894OT7",
     "7021OH7",
     "3841MA7",
