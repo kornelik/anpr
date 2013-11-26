@@ -10,6 +10,7 @@
 #include <algorithm>
 
 namespace anpr {
+	const int PLATE_NUMBER_LENGTH = 7;
     const double RIGHT_ANGLE = 90.0f;
     const double HALF_RIGHT_ANGLE = RIGHT_ANGLE / 2.;
     const double BLUR_SIZE = 3;
@@ -261,7 +262,7 @@ namespace anpr {
 				/* Parse the plate number */
 				value = parsePlate(plateStraight);
 
-				if (value.length() == 7) {
+				if (value.length() == PLATE_NUMBER_LENGTH) {
 					return true;
 				}
             }
