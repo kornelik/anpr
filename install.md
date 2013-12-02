@@ -48,8 +48,9 @@ Installation Instructions (Windows)
 
    4.2. Project -> Properties -> Configuration Properties -> Linker
 
-           * General tab. Add to "Additional Library Dependencies" folder %tesseract_ocr_install_path%\tesseract\lib
-           * Input tab. Add to "Additional Dependencies" the following libraries:
+           4.2.1. General tab. Add to "Additional Library Dependencies" folder %tesseract_ocr_install_path%\tesseract\lib
+
+           4.2.2. Input tab. Add to "Additional Dependencies" the following libraries:
 
                   libtesseract302.lib
                   libtesseract302d.lib
@@ -68,4 +69,5 @@ Installation Instructions (Windows)
    To run from the console:
 
        `cd %solution_root%\(Debug|Release)`
+
        `ANPRProject.exe [--gui]`
