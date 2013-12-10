@@ -1,0 +1,8 @@
+Anpr correctly worked on:
+Windows 8, 
+Windows 7,
+Ubintu 13.03;
+
+Program launched according to Release Notes(Technical description);
+
+Git hash - 65e94f33f3e7f70fe59aed2da0a7f72417e
